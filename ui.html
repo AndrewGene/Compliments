@@ -1,0 +1,174 @@
+<div id='compliments'>
+<h2>Chosen Color</h2>
+<div class='chosen-color color'></div><span id='clipboard-copy'>(Click on a color to copy it to your clipboard.)</span>
+<br/>
+<h4>Complementary Colors</h4>
+<div class='chosen-color color'></div><div id='complementary-color' class='color'></div>
+<h4>Split Complement Colors</h4>
+<div id='sc-color1' class='color'></div><div id='sc-color2' class='color'></div><div id='sc-color3' class='color'></div>
+<h4>Triad Colors</h4>
+<div id='triad-color1' class='color'></div><div id='triad-color2' class='color'></div><div id='triad-color3' class='color'></div>
+<h4>Tetrad Colors</h4>
+<div id='tetrad-color1' class='color'></div><div id='tetrad-color2' class='color'></div><div id='tetrad-color3' class='color'></div><div id='tetrad-color4' class='color'></div>
+<h4>Monochromatic Colors</h4>
+<div id='monochromatic-color1' class='color'></div><div id='monochromatic-color2' class='color'></div><div id='monochromatic-color3' class='color'></div><div id='monochromatic-color4' class='color'></div><div id='monochromatic-color5' class='color'></div><div id='monochromatic-color6' class='color'></div>
+<h4>Analogous Colors</h4>
+<div id='analogous-color1' class='color'></div><div id='analogous-color2' class='color'></div><div id='analogous-color3' class='color'></div><div id='analogous-color4' class='color'></div><div id='analogous-color5' class='color'></div><div id='analogous-color6' class='color'></div>
+<br/>
+<!-- <p>Choose a color from your document to get started...</p> -->
+
+<!-- <input type='button' id='cancel' value='Done'/> -->
+<input type="text" value="" id="txtSelectedColor">
+</div>
+<img id='error' src='https://figmacompliments.blob.core.windows.net/figmablob/error.png' alt='no fill in selected layer'/>
+<style>
+#txtSelectedColor{
+  display:block;
+  opacity: 0;
+}
+#compliments{
+  margin-bottom:20px;
+  font-family: sans-serif;
+  display:none;
+}
+#error{
+  display:none;
+  width:200px;
+  margin:0px auto;
+  height:250px;
+  margin-top:50px;
+}
+.color{
+  width:40px;
+  height:40px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left:10px;
+  position: relative;
+  border:0.5px solid #999;
+}
+.color:hover{
+  border:0.5px solid #e2e2e2;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  cursor: pointer;
+}
+#clipboard-copy{
+  font-size:small;
+  color:#333;
+  position: relative;
+  top:-15px;
+  left:10px;
+}
+</style>
+<script
+  src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+  crossorigin="anonymous"></script>
+
+<script src='https://figmacompliments.blob.core.windows.net/figmablob/tinycolor.js'></script>
+<script>
+
+//var originalColor;
+//var complementColor;
+//parent.postMessage({ pluginMessage: { type: 'getCurrentSelectionBackground' } }, '*')
+
+$(function(){
+  //console.log("dom loaded");
+  parent.postMessage({ pluginMessage: { type: 'getCurrentSelectionBackground' } }, '*')
+
+  /*const colorDiv = document.querySelectorAll(".color");
+
+  colorDiv.onclick = function() {
+  document.execCommand("copy");
+  }*/
+
+/*document.addEventListener("copy", function(event) {
+  event.preventDefault();
+  if (event.clipboardData) {
+    var text = tinycolor($(this).css("background")).toHexString();
+    event.clipboardData.setData("text/plain", text);
+    console.log(event.clipboardData.getData("text"))
+  }
+});*/
+
+  $(document).on("click",".color", function(event){    
+    var text = tinycolor($(this).css("background")).toHexString();
+    console.log("selected text to copy", text);
+    $("#txtSelectedColor").val(text).select();
+    document.execCommand('copy');
+    parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
+  });
+});
+
+onmessage = (event) => {  
+  if (event.data.pluginMessage === "loaded"){
+    //removed
+  }  
+  else{
+    console.log(event);
+    if (event.data.pluginMessage === "no selection" || event.data.pluginMessage === "no fill"){      
+      $("#error").css("display","block");
+    }
+    else{
+      $("#compliments").show();
+      console.log(event.data.pluginMessage);
+      var element = event.data.pluginMessage;
+      var originalColor = tinycolor.fromRatio({r:element.color.r, g:element.color.g, b:element.color.b});
+      console.log(originalColor);
+      var complementColor = originalColor.complement();
+      console.log(complementColor);
+      $(".chosen-color").css("background",originalColor.toHexString());
+      $("#complementary-color").css("background",complementColor.toHexString());
+
+      var monochromatic = tinycolor(originalColor).monochromatic();
+      var monochromaticColors = monochromatic.map(function(t) { return t.toHexString(); });    
+      $.each(monochromaticColors, function(index, color){      
+            $("#monochromatic-color" + (index + 1).toString()).css("background",color);        
+      });
+
+      var analogous = tinycolor(originalColor).analogous();
+      var analogousColors = analogous.map(function(t) { return t.toHexString(); });    
+      $.each(analogousColors, function(index, color){      
+            $("#analogous-color" + (index + 1).toString()).css("background",color);        
+      });
+
+      var sc = tinycolor(originalColor).splitcomplement();
+      var scColors = sc.map(function(t) { return t.toHexString(); });    
+      $.each(scColors, function(index, color){      
+            $("#sc-color" + (index + 1).toString()).css("background",color);        
+      });
+
+      var triad = tinycolor(originalColor).triad();
+      var triadColors = triad.map(function(t) { return t.toHexString(); });    
+      $.each(triadColors, function(index, color){      
+            $("#triad-color" + (index + 1).toString()).css("background",color);        
+      });
+
+      var tetrad = tinycolor(originalColor).tetrad();
+      var tetradColors = tetrad.map(function(t) { return t.toHexString(); });    
+      $.each(tetradColors, function(index, color){      
+            $("#tetrad-color" + (index + 1).toString()).css("background",color);        
+      });
+    }
+  }
+}
+
+showError = errorMessage => {
+    document.querySelector('#errors').textContent = errorMessage
+  }
+/*document.onload = function(){
+  console.log("document loaded");
+  parent.postMessage({ pluginMessage: { type: 'getCurrentSelectionBackground' } }, '*')
+};*/
+
+/*document.getElementById('create').onclick = () => {
+  const textbox = document.getElementById('count');
+  const count = parseInt(textbox.value, 10);
+  parent.postMessage({ pluginMessage: { type: 'create-rectangles', count } }, '*')
+}*/
+
+document.getElementById('cancel').onclick = () => {
+  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
+}
+
+</script>
